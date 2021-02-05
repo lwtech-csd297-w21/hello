@@ -22,6 +22,16 @@ public class HelloServlet extends HttpServlet {
     private static final String SERVLET_NAME = "hello";
 
     @Override
+    public void init(ServletConfig config) throws ServletException {
+        logger.warn("");
+        logger.warn("===========================================================");
+        logger.warn("       " + SERVLET_NAME + " init() started");
+        logger.warn("            http://localhost:8080/" + SERVLET_NAME + "/servlet");
+        logger.warn("===========================================================");
+        logger.warn("");
+    }
+
+    @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) {
         String logInfo = request.getRemoteAddr() + " " + request.getMethod() + " " + request.getRequestURI();
         logger.debug("IN - {}", logInfo);
@@ -45,6 +55,14 @@ public class HelloServlet extends HttpServlet {
     @Override
     public String getServletInfo() {
         return SERVLET_NAME + " Servlet";
+    }
+
+    @Override
+    public void destroy() {
+        logger.warn("");
+        logger.warn("-----------------------------------------");
+        logger.warn("  " + SERVLET_NAME + " destroy() completed!");
+        logger.warn("-----------------------------------------");
     }
 
 }
