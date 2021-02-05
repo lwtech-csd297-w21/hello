@@ -1,6 +1,7 @@
 package edu.lwtech.csd297.hello;
 
 import java.io.*;
+import java.net.URLDecoder;
 import java.util.*;
 import java.util.concurrent.atomic.*;
 
@@ -79,6 +80,7 @@ public class HelloServlet extends HttpServlet {
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) {
         String logInfo = request.getRemoteAddr() + " " + request.getMethod() + " " + request.getRequestURI();
+        logInfo += getSanitizedQueryString(request);
         logger.debug("IN - {}", logInfo);
         long startTime = System.currentTimeMillis();
 
@@ -95,10 +97,10 @@ public class HelloServlet extends HttpServlet {
             switch (cmd) {
 
                 case "home":
-            fmTemplateName = "home.ftl";
-            fmTemplateData.put("n", numPageLoads.incrementAndGet());
-            fmTemplateData.put("ownerName", ownerName);
-            fmTemplateData.put("version", version);
+                    fmTemplateName = "home.ftl";
+                    fmTemplateData.put("n", numPageLoads.incrementAndGet());
+                    fmTemplateData.put("ownerName", ownerName);
+                    fmTemplateData.put("version", version);
                     break;
 
                 case "about":
@@ -196,5 +198,29 @@ public class HelloServlet extends HttpServlet {
         } catch (IOException e) {
             logger.error(e);
         }
-    }    
+    }
+
+    private String getSanitizedQueryString(HttpServletRequest request) {
+        String queryString = request.getQueryString();
+        if (queryString == null)
+            return "";
+
+        try { 
+            queryString = URLDecoder.decode(queryString, "UTF-8");
+        } catch (UnsupportedEncodingException e) {
+            // Should never happen
+            throw new IllegalStateException(e);
+        }
+        queryString = queryString.replaceAll("[\n|\t]", "_");
+        return queryString;
+    }
+
+    private void sendNotFoundError(HttpServletResponse response) {
+        try {
+            response.sendError(HttpServletResponse.SC_NOT_FOUND);
+        } catch (IOException e) {
+            logger.error("Unable to send 404 response code.", e);
+        }
+    }
+
 }
