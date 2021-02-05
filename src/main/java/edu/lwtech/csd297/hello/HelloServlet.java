@@ -30,7 +30,7 @@ public class HelloServlet extends HttpServlet {
         try (ServletOutputStream out = response.getOutputStream()) {
             out.println("<html><body><h1>Hello World!</h1></body></html>");
         } catch (IOException e) {
-            e.printStackTrace();
+            logger.error("I/O Exception writing out the web page", e);
         }
 
         long time = System.currentTimeMillis() - startTime;
