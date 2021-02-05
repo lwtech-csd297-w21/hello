@@ -16,7 +16,7 @@
                 <li>Apache Freemarker</li>
                 <li>VS Code</li>
                 <li>Log4j2</li>
-                <li>The Java HTTP Servlet Spec<li>
+                <li>The Java HTTP Servlet Spec</li>
                 <li>Amazon Web Services</li>
                 <li>Ubuntu Linux</li>
                 <li>Jenkins CI</li>

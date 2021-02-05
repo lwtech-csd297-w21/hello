@@ -11,6 +11,7 @@ import javax.servlet.annotation.*;
 
 import freemarker.template.*;
 import org.apache.logging.log4j.*;
+import org.apache.logging.log4j.core.config.Configurator;
 
 // World's Simplest Hello World Servlet -
 //      http://server:8080/hello/servlet
@@ -106,6 +107,18 @@ public class HelloServlet extends HttpServlet {
                 case "health":
                     sendResponse(response, HttpServletResponse.SC_OK);
                     return;                    
+
+                case "setloglevel":
+                    String level = request.getParameter("level");
+                    if (level == null)
+                        level = "INFO";
+                    if (!"|DEBUG|INFO|WARN|".contains("|"+level+"|")) {
+                        sendResponse(response, HttpServletResponse.SC_NOT_FOUND);
+                        return;
+                    }
+                    setLogLevel(level);
+                    sendResponse(response, HttpServletResponse.SC_OK);
+                    return;
 
                 case "about":
                     fmTemplateName = "about.ftl";
@@ -225,6 +238,10 @@ public class HelloServlet extends HttpServlet {
         } catch (IOException | IllegalStateException e) {
             logger.error("Unable to send {} response code.", code, e);
         }
+    }
+
+    private void setLogLevel(String level) {
+        Configurator.setAllLevels(LogManager.getRootLogger().getName(), Level.getLevel(level));
     }
 
 }
