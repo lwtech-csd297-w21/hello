@@ -1,6 +1,7 @@
 package edu.lwtech.csd297.hello;
 
 import java.io.*;
+import java.util.*;
 import java.nio.file.*;
 import java.util.concurrent.atomic.*;
 
@@ -24,6 +25,7 @@ public class HelloServlet extends HttpServlet {
 
     private static final String SERVLET_NAME = "hello";
     private static final String RESOURCES_DIR = "/WEB-INF/classes";
+    private static final String INTERNAL_PROPS_FILENAME = "servlet.properties";
 
     private String webPageTemplate = "";
     private final AtomicInteger numPageLoads = new AtomicInteger(0);
@@ -40,8 +42,15 @@ public class HelloServlet extends HttpServlet {
         String resourcesDir = config.getServletContext().getRealPath(RESOURCES_DIR);
         logger.info("resourcesDir = {}", resourcesDir);
 
+        // Initialize internal properties
+        String fullInternalPropsFilename = resourcesDir + "/" + INTERNAL_PROPS_FILENAME;
+        logger.info("Reading properties from {}", fullInternalPropsFilename);
+        Properties props = loadProperties(fullInternalPropsFilename);
+        String templateFilename = getProperty(props, "templateFilename");
+        logger.info("templateFilename = {}", templateFilename);
+
         logger.info("Reading templateFile...");
-        String fullTemplateFilename = resourcesDir + "/templates/home.tpl";
+        String fullTemplateFilename = resourcesDir + "/templates/" + templateFilename;
         webPageTemplate = readTemplateFile(fullTemplateFilename);
 
         logger.warn("");
@@ -101,6 +110,28 @@ public class HelloServlet extends HttpServlet {
             throw new UnavailableException(msg);
         }
         return contents;
+    }
+
+    private Properties loadProperties(String propsFilename) throws UnavailableException {
+        Properties props = new Properties();
+        try (InputStream inputStream = new FileInputStream(propsFilename)) {
+            props.load(inputStream);
+        } catch (IOException e) {
+            String msg = "Unable to find properties file at " + propsFilename;
+            logger.fatal(msg, e);
+            throw new UnavailableException(msg);
+        }
+        return props;
+    }
+
+    private String getProperty(Properties props, String propertyName) throws UnavailableException {
+        String property = props.getProperty(propertyName);
+        if (property == null) {
+            String msg = "Unable to get " + propertyName + " property from props.";
+            logger.fatal(msg);
+            throw new UnavailableException(msg);
+        }
+        return property;
     }
 
 }
