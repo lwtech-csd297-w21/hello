@@ -1,6 +1,8 @@
 package edu.lwtech.csd297.hello;
 
 import java.io.*;
+import java.nio.file.*;
+
 import javax.servlet.*;
 import javax.servlet.http.*;
 import javax.servlet.annotation.*;
@@ -20,6 +22,9 @@ public class HelloServlet extends HttpServlet {
     private static final Logger logger = LogManager.getLogger(HelloServlet.class);
 
     private static final String SERVLET_NAME = "hello";
+    private static final String RESOURCES_DIR = "/WEB-INF/classes";
+
+    private String webPageTemplate = "";
 
     @Override
     public void init(ServletConfig config) throws ServletException {
@@ -29,6 +34,17 @@ public class HelloServlet extends HttpServlet {
         logger.warn("            http://localhost:8080/" + SERVLET_NAME + "/servlet");
         logger.warn("===========================================================");
         logger.warn("");
+
+        String resourcesDir = config.getServletContext().getRealPath(RESOURCES_DIR);
+        logger.info("resourcesDir = {}", resourcesDir);
+
+        logger.info("Reading templateFile...");
+        String fullTemplateFilename = resourcesDir + "/templates/home.tpl";
+        webPageTemplate = readTemplateFile(fullTemplateFilename);
+
+        logger.warn("");
+        logger.warn("Initialization completed successfully!");
+        logger.warn("");
     }
 
     @Override
@@ -37,8 +53,9 @@ public class HelloServlet extends HttpServlet {
         logger.debug("IN - {}", logInfo);
         long startTime = System.currentTimeMillis();
 
+        // Send the template to the user
         try (ServletOutputStream out = response.getOutputStream()) {
-            out.println("<html><body><h1>Hello World!</h1></body></html>");
+            out.println(webPageTemplate);
         } catch (IOException e) {
             logger.error("I/O Exception writing out the web page", e);
         }
@@ -63,6 +80,20 @@ public class HelloServlet extends HttpServlet {
         logger.warn("-----------------------------------------");
         logger.warn("  " + SERVLET_NAME + " destroy() completed!");
         logger.warn("-----------------------------------------");
+    }
+
+    // --------------------------------------------------------------------
+
+    private String readTemplateFile(String fileName) throws UnavailableException {
+        String contents = "";
+        try {
+            contents = new String(Files.readAllBytes(Paths.get(fileName)));
+        } catch (IOException ex) {
+            String msg = "Unable to read " + fileName;
+            logger.fatal(msg, ex);
+            throw new UnavailableException(msg);
+        }
+        return contents;
     }
 
 }
