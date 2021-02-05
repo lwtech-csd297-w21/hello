@@ -103,6 +103,10 @@ public class HelloServlet extends HttpServlet {
                     fmTemplateData.put("version", version);
                     break;
 
+                case "health":
+                    sendResponse(response, HttpServletResponse.SC_OK);
+                    return;                    
+
                 case "about":
                     fmTemplateName = "about.ftl";
                     fmTemplateData.put("ownerName", ownerName);
@@ -111,7 +115,7 @@ public class HelloServlet extends HttpServlet {
 
                 default:
                     logger.info("Unknown GET command received: {}", cmd);
-                    sendNotFoundError(response);
+                    sendResponse(response, HttpServletResponse.SC_NOT_FOUND);
                     return;
             }
 
@@ -215,11 +219,11 @@ public class HelloServlet extends HttpServlet {
         return queryString;
     }
 
-    private void sendNotFoundError(HttpServletResponse response) {
+    private void sendResponse(HttpServletResponse response, int code) {
         try {
-            response.sendError(HttpServletResponse.SC_NOT_FOUND);
-        } catch (IOException e) {
-            logger.error("Unable to send 404 response code.", e);
+            response.sendError(code);
+        } catch (IOException | IllegalStateException e) {
+            logger.error("Unable to send {} response code.", code, e);
         }
     }
 
