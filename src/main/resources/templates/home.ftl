@@ -8,6 +8,7 @@
     <body>
         <h1>Hello World from ${ownerName}'s Server!</h1>
         <h3>This page has been loaded ${n} times since the server was restarted.</h3>
+        <p><a href="servlet?cmd=about">About this website</a></p>
         <p>v${version}</p>
     </body>
 </html>

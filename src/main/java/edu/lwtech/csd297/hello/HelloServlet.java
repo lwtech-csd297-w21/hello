@@ -82,15 +82,36 @@ public class HelloServlet extends HttpServlet {
         logger.debug("IN - {}", logInfo);
         long startTime = System.currentTimeMillis();
 
+        String cmd = request.getParameter("cmd");
+        if (cmd == null)
+            cmd = "home";
+
         String fmTemplateName = "";
         Map<String, Object> fmTemplateData = new HashMap<>();
 
         try {
+
             // Prepare the appropriate Freemarker template
+            switch (cmd) {
+
+                case "home":
             fmTemplateName = "home.ftl";
             fmTemplateData.put("n", numPageLoads.incrementAndGet());
             fmTemplateData.put("ownerName", ownerName);
             fmTemplateData.put("version", version);
+                    break;
+
+                case "about":
+                    fmTemplateName = "about.ftl";
+                    fmTemplateData.put("ownerName", ownerName);
+                    fmTemplateData.put("version", version);
+                    break;
+
+                default:
+                    logger.info("Unknown GET command received: {}", cmd);
+                    sendNotFoundError(response);
+                    return;
+            }
 
             // Process the template and send the results back to the user
             processTemplate(response, fmTemplateName, fmTemplateData);
