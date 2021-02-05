@@ -28,6 +28,11 @@ public class HelloServlet extends HttpServlet {
     }
 
     @Override
+    protected void doPost(HttpServletRequest request, HttpServletResponse response) {
+        doGet(request, response);
+    }
+
+    @Override
     public String getServletInfo() {
         return SERVLET_NAME + " Servlet";
     }
