@@ -26,8 +26,10 @@ public class HelloServlet extends HttpServlet {
     private static final String SERVLET_NAME = "hello";
     private static final String RESOURCES_DIR = "/WEB-INF/classes";
     private static final String INTERNAL_PROPS_FILENAME = "servlet.properties";
+    private static final String EXTERNAL_PROPS_FILENAME = "/var/local/config/" + SERVLET_NAME + ".props";
 
     private String webPageTemplate = "";
+    private String ownerName = "";
     private final AtomicInteger numPageLoads = new AtomicInteger(0);
 
     @Override
@@ -49,6 +51,11 @@ public class HelloServlet extends HttpServlet {
         String templateFilename = getProperty(props, "templateFilename");
         logger.info("templateFilename = {}", templateFilename);
 
+        // Initialize external properties
+        Properties externalProps = loadProperties(EXTERNAL_PROPS_FILENAME);
+        ownerName = getProperty(externalProps, "ownerName");
+        logger.info("ownerName = {}", ownerName);
+
         logger.info("Reading templateFile...");
         String fullTemplateFilename = resourcesDir + "/templates/" + templateFilename;
         webPageTemplate = readTemplateFile(fullTemplateFilename);
@@ -67,9 +74,11 @@ public class HelloServlet extends HttpServlet {
         numPageLoads.incrementAndGet();
 
         // Insert variable values into the template
-        String html = webPageTemplate.replace("{n}", "" + numPageLoads);        
+        String html = webPageTemplate
+            .replace("{ownerName}", ownerName)
+            .replace("{n}", ""+numPageLoads);
 
-        // Send the template to the user
+            // Send the template to the user
         try (ServletOutputStream out = response.getOutputStream()) {
             out.println(html);
         } catch (IOException e) {
