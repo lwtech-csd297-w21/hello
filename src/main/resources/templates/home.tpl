@@ -7,6 +7,6 @@
     </head>
     <body>
         <h1>Hello World!</h1>
-        <p>This page has been loaded at least once since the Tomcat server was restarted.</p>
+        <p>This page has been loaded {n} times since the server was restarted.</p>
     </body>
 </html>

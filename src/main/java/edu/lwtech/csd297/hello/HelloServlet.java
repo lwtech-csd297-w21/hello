@@ -2,6 +2,7 @@ package edu.lwtech.csd297.hello;
 
 import java.io.*;
 import java.nio.file.*;
+import java.util.concurrent.atomic.*;
 
 import javax.servlet.*;
 import javax.servlet.http.*;
@@ -25,6 +26,7 @@ public class HelloServlet extends HttpServlet {
     private static final String RESOURCES_DIR = "/WEB-INF/classes";
 
     private String webPageTemplate = "";
+    private final AtomicInteger numPageLoads = new AtomicInteger(0);
 
     @Override
     public void init(ServletConfig config) throws ServletException {
@@ -53,9 +55,14 @@ public class HelloServlet extends HttpServlet {
         logger.debug("IN - {}", logInfo);
         long startTime = System.currentTimeMillis();
 
+        numPageLoads.incrementAndGet();
+
+        // Insert variable values into the template
+        String html = webPageTemplate.replace("{n}", "" + numPageLoads);        
+
         // Send the template to the user
         try (ServletOutputStream out = response.getOutputStream()) {
-            out.println(webPageTemplate);
+            out.println(html);
         } catch (IOException e) {
             logger.error("I/O Exception writing out the web page", e);
         }
