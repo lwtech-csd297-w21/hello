@@ -16,6 +16,8 @@ public class HelloServlet extends HttpServlet {
 
     private static final long serialVersionUID = 1L;        // Unused
 
+    private static final String SERVLET_NAME = "hello";
+
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) {
         try (ServletOutputStream out = response.getOutputStream()) {
@@ -24,4 +26,10 @@ public class HelloServlet extends HttpServlet {
             e.printStackTrace();
         }
     }
+
+    @Override
+    public String getServletInfo() {
+        return SERVLET_NAME + " Servlet";
+    }
+
 }
