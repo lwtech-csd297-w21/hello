@@ -125,6 +125,7 @@ public class HelloServlet extends HttpServlet {
         commandMap.put("health", new HealthCommand());
         commandMap.put("resetcount", new ResetCountCommand());
         commandMap.put("setloglevel", new SetLogLevelCommand());
+        commandMap.put("session", new SessionCommand());
 
         logger.warn("");
         logger.warn("Initialization completed successfully!");

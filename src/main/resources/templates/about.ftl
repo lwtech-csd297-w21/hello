@@ -28,7 +28,8 @@
                 <li>...and finally, the good folks at Zoom!</li>
             </ul>
         </p>
-        <p><a href="servlet?cmd=home">Return to the homepage</a></p>
+        <p><a href="servlet?cmd=home">Home</a></p>
+        <p><a href="servlet?cmd=session">Your own personal page!</a></p>
         <p>v${version}</p>
     </body>
 </html>
