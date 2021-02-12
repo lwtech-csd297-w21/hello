@@ -3,6 +3,7 @@ package edu.lwtech.csd297.hello;
 import java.io.*;
 import java.net.URLDecoder;
 import java.util.*;
+import java.nio.file.*;
 import java.util.concurrent.atomic.*;
 
 import javax.servlet.*;
@@ -30,13 +31,14 @@ public class HelloServlet extends HttpServlet {
     private static final String RESOURCES_DIR = "/WEB-INF/classes";
     private static final String INTERNAL_PROPS_FILENAME = "servlet.properties";
     private static final String EXTERNAL_PROPS_FILENAME = "/var/local/config/" + SERVLET_NAME + ".props";
+    private static final String SAVED_STATE_FILENAME = "/var/local/config/" + SERVLET_NAME + ".state";
     private static final Configuration freeMarkerConfig = new Configuration(Configuration.getVersion());
 
     private static final Map<String, ServletCommand> commandMap = new HashMap<>();
 
     private String ownerName = "";
     private String version = "";
-    private final AtomicInteger numPageLoads = new AtomicInteger(0);
+    private AtomicInteger numPageLoads;
 
     // --------------------------------------------------------------------
 
@@ -91,6 +93,20 @@ public class HelloServlet extends HttpServlet {
         ownerName = getProperty(externalProps, "ownerName");
         logger.info("ownerName = {}", ownerName);
         logger.info("");
+
+        // Read in saved state (if any)
+        logger.info("Reading state file (if any)...");
+        int pageLoads = 0;
+        String savedStateString = "0";
+        try {
+            savedStateString = new String(Files.readAllBytes(Paths.get(SAVED_STATE_FILENAME)));
+            pageLoads = Integer.parseInt(savedStateString.trim());
+        } catch (IOException | NumberFormatException e) {
+            // If there are problems reading the state file, set numPageLoads to zero
+            pageLoads = 0;
+        }
+        logger.info("Setting numPageLoads to {}", pageLoads);
+        numPageLoads = new AtomicInteger(pageLoads);
 
         logger.info("Initializing FreeMarker...");
         String templateDir = resourcesDir + "/templates";
@@ -174,6 +190,12 @@ public class HelloServlet extends HttpServlet {
 
     @Override
     public void destroy() {
+        logger.info("Writing out state to {}", SAVED_STATE_FILENAME);
+        try (PrintWriter out = new PrintWriter(SAVED_STATE_FILENAME)) {
+            out.println(numPageLoads.get());
+        } catch (IOException e) {
+            logger.error("Unable to save state to {}", SAVED_STATE_FILENAME, e);
+        }
         logger.warn("");
         logger.warn("-----------------------------------------");
         logger.warn("  " + SERVLET_NAME + " destroy() completed!");
