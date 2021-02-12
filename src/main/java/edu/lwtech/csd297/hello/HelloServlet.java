@@ -11,7 +11,8 @@ import javax.servlet.annotation.*;
 
 import freemarker.template.*;
 import org.apache.logging.log4j.*;
-import org.apache.logging.log4j.core.config.Configurator;
+
+import edu.lwtech.csd297.hello.commands.*;
 
 // World's Simplest Hello World Servlet -
 //      http://server:8080/hello/servlet
@@ -31,12 +32,41 @@ public class HelloServlet extends HttpServlet {
     private static final String EXTERNAL_PROPS_FILENAME = "/var/local/config/" + SERVLET_NAME + ".props";
     private static final Configuration freeMarkerConfig = new Configuration(Configuration.getVersion());
 
+    private static final Map<String, ServletCommand> commandMap = new HashMap<>();
+
     private String ownerName = "";
     private String version = "";
     private final AtomicInteger numPageLoads = new AtomicInteger(0);
 
+    // --------------------------------------------------------------------
+
+    public String getOwnerName() {
+        return ownerName;
+    }
+
+    public String getVersion() {
+        return version;
+    }
+
+    public int getNumPageLoads() {
+        return numPageLoads.get();
+    }
+
+    public void incrementNumPageLoads() {
+        numPageLoads.incrementAndGet();
+    }
+
+    public void resetPageLoads() {
+        numPageLoads.set(0);
+    }
+
+    // --------------------------------------------------------------------
+
     @Override
     public void init(ServletConfig config) throws ServletException {
+
+        super.init(config);
+
         logger.warn("");
         logger.warn("===========================================================");
         logger.warn("       " + SERVLET_NAME + " init() started");
@@ -73,6 +103,13 @@ public class HelloServlet extends HttpServlet {
         }
         logger.info("Successfully initialized FreeMarker");
 
+        // Initialize the ServletCommand map
+        commandMap.put("home", new HomeCommand());
+        commandMap.put("about", new AboutCommand());
+        commandMap.put("health", new HealthCommand());
+        commandMap.put("resetcount", new ResetCountCommand());
+        commandMap.put("setloglevel", new SetLogLevelCommand());
+
         logger.warn("");
         logger.warn("Initialization completed successfully!");
         logger.warn("");
@@ -93,55 +130,24 @@ public class HelloServlet extends HttpServlet {
         Map<String, Object> fmTemplateData = new HashMap<>();
 
         try {
-
-            // Prepare the appropriate Freemarker template
-            switch (cmd) {
-
-                case "home":
-                    fmTemplateName = "home.ftl";
-                    insertHomePageFields(fmTemplateData);
-                    break;
-
-                case "health":
-                    sendResponse(response, HttpServletResponse.SC_OK);
-                    return;                    
-
-                case "resetcount":
-                    numPageLoads.set(0);
-                    fmTemplateName = "home.ftl";
-                    insertHomePageFields(fmTemplateData);
-                    fmTemplateData.put("bannerMessage", "Page counter reset to zero.");
-                    break;
-
-                case "setloglevel":
-                    String level = request.getParameter("level");
-                    if (level == null)
-                        level = "INFO";
-                    if (!"|DEBUG|INFO|WARN|".contains("|"+level+"|")) {
-                        sendResponse(response, HttpServletResponse.SC_NOT_FOUND);
-                        return;
-                    }
-                    setLogLevel(level);
-                    fmTemplateName = "home.ftl";
-                    insertHomePageFields(fmTemplateData);
-                    fmTemplateData.put("bannerMessage", "Logging level set to " + level + ".");
-                    break;
-
-                case "about":
-                    fmTemplateName = "about.ftl";
-                    fmTemplateData.put("ownerName", ownerName);
-                    fmTemplateData.put("version", version);
-                    break;
-
-                default:
-                    logger.info("Unknown GET command received: {}", cmd);
-                    sendResponse(response, HttpServletResponse.SC_NOT_FOUND);
+            // Run the appropriate ServletCommand
+            ServletCommand command = commandMap.get(cmd);
+            if (command != null) {
+                fmTemplateName = command.initTemplate(this, request, response, fmTemplateData);
+                if (fmTemplateName == null)
                     return;
+            } else {
+                logger.info("Unknown GET command received: {}", cmd);
+                response.sendError(HttpServletResponse.SC_NOT_FOUND);
+                return;
             }
 
             // Process the template and send the results back to the user
             processTemplate(response, fmTemplateName, fmTemplateData);
 
+        } catch (IOException e) {
+            // Typically, this is because the connection was closed prematurely
+            logger.debug("Unexpected I/O exception: ", e);
         } catch (TemplateException e) {
             // Somehow bad data got into the template model...
             logger.error("Template exception processing {}", fmTemplateName);
@@ -198,7 +204,7 @@ public class HelloServlet extends HttpServlet {
         return property;
     }
 
-    private void processTemplate(HttpServletResponse response, String templateName, Map<String, Object> dataModel) throws TemplateException {
+    private void processTemplate(HttpServletResponse response, String templateName, Map<String, Object> dataModel) throws TemplateException, IOException {
         logger.debug("Processing Template: {}", templateName);
         try (PrintWriter out = response.getWriter()) {
 
@@ -209,9 +215,6 @@ public class HelloServlet extends HttpServlet {
             // This should never happen.
             logger.fatal(e);
             throw new IllegalStateException(e);
-        } catch (IOException e) {
-            // Typically, this means the browser connection dropped before we could send our response. Ignore.
-            logger.debug(e);
         }
     }
 
@@ -237,24 +240,6 @@ public class HelloServlet extends HttpServlet {
         }
         queryString = queryString.replaceAll("[\n|\t]", "_");
         return queryString;
-    }
-
-    private void sendResponse(HttpServletResponse response, int code) {
-        try {
-            response.sendError(code);
-        } catch (IOException | IllegalStateException e) {
-            logger.error("Unable to send {} response code.", code, e);
-        }
-    }
-
-    private void setLogLevel(String level) {
-        Configurator.setAllLevels(LogManager.getRootLogger().getName(), Level.getLevel(level));
-    }
-
-    private void insertHomePageFields(Map<String, Object> templateData) {
-        templateData.put("n", numPageLoads.incrementAndGet());
-        templateData.put("ownerName", ownerName);
-        templateData.put("version", version);
     }
 
 }
