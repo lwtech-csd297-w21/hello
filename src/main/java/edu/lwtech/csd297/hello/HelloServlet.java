@@ -99,9 +99,7 @@ public class HelloServlet extends HttpServlet {
 
                 case "home":
                     fmTemplateName = "home.ftl";
-                    fmTemplateData.put("n", numPageLoads.incrementAndGet());
-                    fmTemplateData.put("ownerName", ownerName);
-                    fmTemplateData.put("version", version);
+                    insertHomePageFields(fmTemplateData);
                     break;
 
                 case "health":
@@ -110,8 +108,10 @@ public class HelloServlet extends HttpServlet {
 
                 case "resetcount":
                     numPageLoads.set(0);
-                    sendResponse(response, HttpServletResponse.SC_OK);
-                    return;
+                    fmTemplateName = "home.ftl";
+                    insertHomePageFields(fmTemplateData);
+                    fmTemplateData.put("bannerMessage", "Page counter reset to zero.");
+                    break;
 
                 case "setloglevel":
                     String level = request.getParameter("level");
@@ -122,8 +122,10 @@ public class HelloServlet extends HttpServlet {
                         return;
                     }
                     setLogLevel(level);
-                    sendResponse(response, HttpServletResponse.SC_OK);
-                    return;
+                    fmTemplateName = "home.ftl";
+                    insertHomePageFields(fmTemplateData);
+                    fmTemplateData.put("bannerMessage", "Logging level set to " + level + ".");
+                    break;
 
                 case "about":
                     fmTemplateName = "about.ftl";
@@ -247,6 +249,12 @@ public class HelloServlet extends HttpServlet {
 
     private void setLogLevel(String level) {
         Configurator.setAllLevels(LogManager.getRootLogger().getName(), Level.getLevel(level));
+    }
+
+    private void insertHomePageFields(Map<String, Object> templateData) {
+        templateData.put("n", numPageLoads.incrementAndGet());
+        templateData.put("ownerName", ownerName);
+        templateData.put("version", version);
     }
 
 }
