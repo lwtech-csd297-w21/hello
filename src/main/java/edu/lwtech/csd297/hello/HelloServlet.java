@@ -108,6 +108,11 @@ public class HelloServlet extends HttpServlet {
                     sendResponse(response, HttpServletResponse.SC_OK);
                     return;                    
 
+                case "resetcount":
+                    numPageLoads.set(0);
+                    sendResponse(response, HttpServletResponse.SC_OK);
+                    return;
+
                 case "setloglevel":
                     String level = request.getParameter("level");
                     if (level == null)
